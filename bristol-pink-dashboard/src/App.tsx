@@ -1,4 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+// import default CSV assets as raw text
+import coffeeCsv from './assets/pink_coffee.csv?raw';
+import croissantCsv from './assets/pink_croissant.csv?raw';
+import { parseCSVText } from './services/csvParser';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { SalesRecord, AlgorithmType, ViewMode } from './types';
 import { getTopProducts, aggregateByDate } from './services/dataProcessor';
@@ -6,6 +10,7 @@ import { FileUploader } from './components/FileUploader';
 import { TopProducts } from './components/TopProducts';
 import { SalesChart } from './components/SalesChart';
 import { PredictionChart } from './components/PredictionChart';
+import GlobalDropZone from './components/GlobalDropZone';
 import { TrainingPeriodSelector } from './components/TrainingPeriodSelector';
 import { DataTable } from './components/DataTable';
 import { getPredictions } from './services/api';
@@ -33,6 +38,55 @@ function App() {
     setSalesRecords(records);
     setPredictions([]);
   };
+
+  // Allow global drop to load files (from GlobalDropZone)
+  const handleGlobalFile = async (file: File) => {
+    try {
+      const parsed = await import('./services/csvParser').then((m) => m.parseCSVFile(file));
+      // If parsed rows have empty product (single-column files), give default product names
+      const withProducts = parsed.map((r: SalesRecord) => ({
+        ...r,
+        product: r.product || (file.name.toLowerCase().includes('croissant') ? 'Croissant' : r.product || 'Product'),
+      }));
+      setSalesRecords(withProducts);
+      setPredictions([]);
+    } catch (err) {
+      console.error('Failed to load dropped file:', err);
+    }
+  };
+
+  // Load default CSV assets on first render
+  useEffect(() => {
+    (async () => {
+      try {
+        const coffeeRecords = await parseCSVText(coffeeCsv);
+        const croissantRecords = await parseCSVText(croissantCsv);
+
+        // Assign inferred product names for single-product files
+        const cCoffee = coffeeRecords.map((r) => ({
+          ...r,
+          product: r.product || 'Coffee',
+        }));
+        const cCroissant = croissantRecords.map((r) => ({
+          ...r,
+          product: r.product || 'Croissant',
+        }));
+
+        const combined = [...cCoffee, ...cCroissant];
+        setSalesRecords(combined);
+      } catch (err) {
+        console.error('Failed to load default CSVs:', err);
+      }
+    })();
+  }, []);
+
+  // Auto-run predictions if we have data and no predictions yet
+  useEffect(() => {
+    if (salesRecords.length > 0 && predictions.length === 0) {
+      handleRunPrediction();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [salesRecords]);
 
   const handleRunPrediction = async () => {
     if (salesRecords.length === 0) return;
@@ -74,7 +128,8 @@ function App() {
   });
 
   return (
-    <div style={{ minHeight: '100vh' }}>
+    <GlobalDropZone onFile={handleGlobalFile}>
+      <div style={{ minHeight: '100vh' }}>
       {/* Header */}
       <header style={{
         backgroundColor: '#e91e63',
@@ -213,6 +268,7 @@ function App() {
         </main>
       </div>
     </div>
+    </GlobalDropZone>
   );
 }
 

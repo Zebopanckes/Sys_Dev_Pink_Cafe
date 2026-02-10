@@ -27,7 +27,7 @@ export function DataTable({ records }: DataTableProps) {
     return dir * (a.unitsSold - b.unitsSold);
   });
 
-  const headerStyle = (key: SortKey): React.CSSProperties => ({
+  const headerStyle = (_key: SortKey): React.CSSProperties => ({
     padding: '0.75rem 1rem',
     textAlign: 'left' as const,
     cursor: 'pointer',

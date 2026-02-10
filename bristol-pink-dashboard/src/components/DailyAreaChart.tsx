@@ -1,23 +1,16 @@
 import { useState, useEffect } from 'react';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Brush,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { ChartDataPoint } from '../types';
 import { ProductToggle, COLORS } from './ProductToggle';
 
-interface SalesChartProps {
+interface DailyAreaChartProps {
   chartData: ChartDataPoint[];
   products: string[];
 }
 
-export function SalesChart({ chartData, products }: SalesChartProps) {
+export function DailyAreaChart({ chartData, products }: DailyAreaChartProps) {
   const [visible, setVisible] = useState<Set<string>>(() => new Set(products));
 
   useEffect(() => { setVisible(new Set(products)); }, [products]);
@@ -30,13 +23,7 @@ export function SalesChart({ chartData, products }: SalesChartProps) {
     });
   };
 
-  if (chartData.length === 0) {
-    return (
-      <div style={{ textAlign: 'center', padding: '2rem', color: '#999', backgroundColor: '#fff', borderRadius: 12 }}>
-        No sales data to display. Upload a CSV file to get started.
-      </div>
-    );
-  }
+  if (chartData.length === 0) return null;
 
   return (
     <div style={{
@@ -44,11 +31,11 @@ export function SalesChart({ chartData, products }: SalesChartProps) {
       boxShadow: '0 1px 3px rgba(0,0,0,0.08)', border: '1px solid #f0f0f0',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <h3 style={{ margin: 0, color: '#333', fontSize: '1rem', fontWeight: 600 }}>Daily Sales Trend</h3>
+        <h3 style={{ margin: 0, color: '#333', fontSize: '1rem', fontWeight: 600 }}>Daily Stacked Area</h3>
         <ProductToggle products={products} visible={visible} onToggle={toggle} />
       </div>
-      <ResponsiveContainer width="100%" height={350}>
-        <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+      <ResponsiveContainer width="100%" height={300}>
+        <AreaChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
           <XAxis
             dataKey="date"
@@ -63,23 +50,23 @@ export function SalesChart({ chartData, products }: SalesChartProps) {
             contentStyle={{ borderRadius: 8, border: '1px solid #eee', fontSize: '0.85rem' }}
             labelFormatter={(label: string) => `Date: ${label}`}
           />
-          <Brush dataKey="date" height={28} stroke="#e91e63" />
           {products.filter((p) => visible.has(p)).map((p) => {
             const i = products.indexOf(p);
             return (
-              <Line
+              <Area
                 key={p}
                 type="monotone"
                 dataKey={p}
+                stackId="1"
                 stroke={COLORS[i % COLORS.length]}
+                fill={COLORS[i % COLORS.length]}
+                fillOpacity={0.25}
                 strokeWidth={2}
-                dot={false}
                 connectNulls
-                animationDuration={600}
               />
             );
           })}
-        </LineChart>
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

@@ -61,13 +61,14 @@ export function FileUploader({ onFileLoaded }: FileUploaderProps) {
       onDragLeave={handleDragLeave}
       onClick={() => fileInputRef.current?.click()}
       style={{
-        border: `2px dashed ${isDragging ? '#e91e63' : '#ccc'}`,
-        borderRadius: 8,
-        padding: '2rem',
+        border: `2px dashed ${isDragging ? '#e91e63' : '#ddd'}`,
+        borderRadius: 12,
+        padding: '1rem',
         textAlign: 'center',
         cursor: 'pointer',
-        backgroundColor: isDragging ? '#fce4ec' : '#fafafa',
+        backgroundColor: isDragging ? '#fce4ec' : '#fff',
         transition: 'all 0.2s ease',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
       }}
     >
       <input

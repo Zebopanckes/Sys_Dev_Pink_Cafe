@@ -1,4 +1,5 @@
 import { AlgorithmType } from '../types';
+import { useTheme } from '../ThemeContext';
 
 interface TrainingPeriodSelectorProps {
   weeks: number;
@@ -17,19 +18,22 @@ export function TrainingPeriodSelector({
   onRunPrediction,
   isLoading,
 }: TrainingPeriodSelectorProps) {
+  const { theme } = useTheme();
   return (
     <div style={{
       display: 'flex',
       alignItems: 'center',
       gap: '1.5rem',
-      backgroundColor: '#fff',
+      backgroundColor: theme.cardBg,
       borderRadius: 8,
       padding: '1rem 1.5rem',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      boxShadow: theme.shadow,
+      border: `1px solid ${theme.cardBorder}`,
       flexWrap: 'wrap',
+      transition: 'background-color 0.3s ease',
     }}>
       <div>
-        <label style={{ fontSize: '0.85rem', color: '#666', display: 'block', marginBottom: 4 }}>
+        <label style={{ fontSize: '0.85rem', color: theme.textSecondary, display: 'block', marginBottom: 4 }}>
           Training Period
         </label>
         <select
@@ -38,7 +42,9 @@ export function TrainingPeriodSelector({
           style={{
             padding: '0.5rem',
             borderRadius: 4,
-            border: '1px solid #ddd',
+            border: `1px solid ${theme.inputBorder}`,
+            backgroundColor: theme.inputBg,
+            color: theme.text,
             fontSize: '0.95rem',
           }}
         >
@@ -49,7 +55,7 @@ export function TrainingPeriodSelector({
       </div>
 
       <div>
-        <label style={{ fontSize: '0.85rem', color: '#666', display: 'block', marginBottom: 4 }}>
+        <label style={{ fontSize: '0.85rem', color: theme.textSecondary, display: 'block', marginBottom: 4 }}>
           Algorithm
         </label>
         <select
@@ -58,13 +64,17 @@ export function TrainingPeriodSelector({
           style={{
             padding: '0.5rem',
             borderRadius: 4,
-            border: '1px solid #ddd',
+            border: `1px solid ${theme.inputBorder}`,
+            backgroundColor: theme.inputBg,
+            color: theme.text,
             fontSize: '0.95rem',
           }}
         >
           <option value="linear_regression">Linear Regression</option>
           <option value="random_forest">Random Forest</option>
           <option value="gradient_boosting">Gradient Boosting</option>
+          <option value="arima">ARIMA</option>
+          <option value="lstm">LSTM</option>
         </select>
       </div>
 

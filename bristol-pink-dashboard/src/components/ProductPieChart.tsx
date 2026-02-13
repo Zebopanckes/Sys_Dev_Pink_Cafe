@@ -4,6 +4,7 @@ import {
 } from 'recharts';
 import { ChartDataPoint } from '../types';
 import { COLORS } from './ProductToggle';
+import { useTheme } from '../ThemeContext';
 
 interface ProductPieChartProps {
   chartData: ChartDataPoint[];
@@ -11,6 +12,8 @@ interface ProductPieChartProps {
 }
 
 export function ProductPieChart({ chartData, products }: ProductPieChartProps) {
+  const { theme } = useTheme();
+
   const totals = useMemo(() => {
     return products.map((p, i) => {
       const total = chartData.reduce((sum, point) => {
@@ -37,10 +40,11 @@ export function ProductPieChart({ chartData, products }: ProductPieChartProps) {
 
   return (
     <div style={{
-      backgroundColor: '#fff', borderRadius: 12, padding: '1.25rem',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.08)', border: '1px solid #f0f0f0',
+      backgroundColor: theme.cardBg, borderRadius: 12, padding: '1.25rem',
+      boxShadow: theme.shadow, border: `1px solid ${theme.cardBorder}`,
+      transition: 'background-color 0.3s ease',
     }}>
-      <h3 style={{ margin: '0 0 0.5rem', color: '#333', fontSize: '1rem', fontWeight: 600 }}>Product Distribution</h3>
+      <h3 style={{ margin: '0 0 0.5rem', color: theme.text, fontSize: '1rem', fontWeight: 600 }}>Product Distribution</h3>
       <ResponsiveContainer width="100%" height={280}>
         <PieChart>
           <Pie
@@ -56,17 +60,17 @@ export function ProductPieChart({ chartData, products }: ProductPieChartProps) {
             label={renderLabel}
           >
             {totals.map((d) => (
-              <Cell key={d.name} fill={d.color} stroke="#fff" strokeWidth={2} />
+              <Cell key={d.name} fill={d.color} stroke={theme.cardBg} strokeWidth={2} />
             ))}
           </Pie>
           <Tooltip
-            contentStyle={{ borderRadius: 8, border: '1px solid #eee', fontSize: '0.85rem' }}
+            contentStyle={{ borderRadius: 8, border: `1px solid ${theme.tooltipBorder}`, fontSize: '0.85rem', backgroundColor: theme.tooltipBg, color: theme.text }}
             formatter={(value: number) => [`${value.toLocaleString()} units`, '']}
           />
           <Legend
             iconType="circle"
             iconSize={10}
-            wrapperStyle={{ fontSize: '0.8rem' }}
+            wrapperStyle={{ fontSize: '0.8rem', color: theme.textSecondary }}
           />
         </PieChart>
       </ResponsiveContainer>

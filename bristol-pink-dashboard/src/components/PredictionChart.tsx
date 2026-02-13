@@ -10,6 +10,7 @@ import {
   Line,
 } from 'recharts';
 import { ProductToggle, COLORS } from './ProductToggle';
+import { useTheme } from '../ThemeContext';
 
 interface PredictionChartData {
   date: string;
@@ -23,6 +24,7 @@ interface PredictionChartProps {
 }
 
 export function PredictionChart({ historicalData, predictionData, products }: PredictionChartProps) {
+  const { theme } = useTheme();
   const [visible, setVisible] = useState<Set<string>>(() => new Set(products));
 
   useEffect(() => { setVisible(new Set(products)); }, [products]);
@@ -58,11 +60,12 @@ export function PredictionChart({ historicalData, predictionData, products }: Pr
   if (predictionData.length === 0) {
     return (
       <div style={{
-        textAlign: 'center', padding: '2rem', color: '#999',
-        backgroundColor: '#fff', borderRadius: 12,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08)', border: '1px solid #f0f0f0',
+        textAlign: 'center', padding: '2rem', color: theme.textMuted,
+        backgroundColor: theme.cardBg, borderRadius: 12,
+        boxShadow: theme.shadow, border: `1px solid ${theme.cardBorder}`,
+        transition: 'background-color 0.3s ease',
       }}>
-        <h3 style={{ margin: '0 0 0.5rem', color: '#333', fontSize: '1rem', fontWeight: 600 }}>Predictions</h3>
+        <h3 style={{ margin: '0 0 0.5rem', color: theme.text, fontSize: '1rem', fontWeight: 600 }}>Predictions</h3>
         Run a prediction to see forecasted sales for the next 4 weeks.
       </div>
     );
@@ -70,42 +73,59 @@ export function PredictionChart({ historicalData, predictionData, products }: Pr
 
   return (
     <div style={{
-      backgroundColor: '#fff', borderRadius: 12, padding: '1.25rem',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.08)', border: '1px solid #f0f0f0',
+      backgroundColor: theme.cardBg, borderRadius: 12, padding: '1.25rem',
+      boxShadow: theme.shadow, border: `1px solid ${theme.cardBorder}`,
+      transition: 'background-color 0.3s ease',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <h3 style={{ margin: 0, color: '#333', fontSize: '1rem', fontWeight: 600 }}>Predicted Sales (Next 4 Weeks)</h3>
+        <h3 style={{ margin: 0, color: theme.text, fontSize: '1rem', fontWeight: 600 }}>Predicted Sales (Next 4 Weeks)</h3>
         <ProductToggle products={products} visible={visible} onToggle={toggle} />
       </div>
       <ResponsiveContainer width="100%" height={380}>
         <ComposedChart data={combined} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+          <CartesianGrid strokeDasharray="3 3" stroke={theme.gridStroke} />
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 11, fill: theme.chartAxisTick }}
             tickFormatter={(val: string) => {
               const parts = val.split('-');
               return `${parts[2]}/${parts[1]}`;
             }}
           />
-          <YAxis tick={{ fontSize: 11 }} />
+          <YAxis tick={{ fontSize: 11, fill: theme.chartAxisTick }} />
           <Tooltip
-            contentStyle={{ borderRadius: 8, border: '1px solid #eee', fontSize: '0.85rem' }}
+            contentStyle={{ borderRadius: 8, border: `1px solid ${theme.tooltipBorder}`, fontSize: '0.85rem', backgroundColor: theme.tooltipBg, color: theme.text }}
             labelFormatter={(label: string) => `Date: ${label}`}
           />
           {products.filter((p) => visible.has(p)).map((p) => {
             const i = products.indexOf(p);
+            const color = COLORS[i % COLORS.length];
             return (
-              <Area
-                key={`ci-${p}`}
-                type="monotone"
-                dataKey={`${p}_ci_upper`}
-                name={`${p} CI`}
-                stroke="none"
-                fill={COLORS[i % COLORS.length]}
-                fillOpacity={0.08}
-                connectNulls
-              />
+              <>
+                <Area
+                  key={`ci-lower-${p}`}
+                  type="monotone"
+                  dataKey={`${p}_ci_lower`}
+                  stroke="none"
+                  fill="transparent"
+                  fillOpacity={0}
+                  stackId={`ci-${p}`}
+                  connectNulls
+                  isAnimationActive={false}
+                />
+                <Area
+                  key={`ci-delta-${p}`}
+                  type="monotone"
+                  dataKey={`${p}_ci_delta`}
+                  name={`${p} 95% CI`}
+                  stroke="none"
+                  fill={color}
+                  fillOpacity={0.15}
+                  stackId={`ci-${p}`}
+                  connectNulls
+                  isAnimationActive={false}
+                />
+              </>
             );
           })}
           {products.filter((p) => visible.has(p)).map((p) => {

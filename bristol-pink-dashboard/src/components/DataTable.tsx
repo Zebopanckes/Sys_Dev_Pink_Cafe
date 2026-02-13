@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SalesRecord } from '../types';
+import { useTheme } from '../ThemeContext';
 
 interface DataTableProps {
   records: SalesRecord[];
@@ -8,6 +9,7 @@ interface DataTableProps {
 type SortKey = 'date' | 'product' | 'unitsSold';
 
 export function DataTable({ records }: DataTableProps) {
+  const { theme } = useTheme();
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [sortAsc, setSortAsc] = useState(true);
 
@@ -31,10 +33,11 @@ export function DataTable({ records }: DataTableProps) {
     padding: '0.75rem 1rem',
     textAlign: 'left' as const,
     cursor: 'pointer',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.tableHeaderBg,
     borderBottom: '2px solid #e91e63',
     userSelect: 'none',
     whiteSpace: 'nowrap',
+    color: theme.text,
   });
 
   const arrow = (key: SortKey) => sortKey === key ? (sortAsc ? ' ▲' : ' ▼') : '';
@@ -44,10 +47,12 @@ export function DataTable({ records }: DataTableProps) {
       <table style={{
         width: '100%',
         borderCollapse: 'collapse',
-        backgroundColor: '#fff',
+        backgroundColor: theme.cardBg,
         borderRadius: 8,
         overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        boxShadow: theme.shadow,
+        color: theme.text,
+        transition: 'background-color 0.3s ease',
       }}>
         <thead>
           <tr>
@@ -65,7 +70,7 @@ export function DataTable({ records }: DataTableProps) {
         <tbody>
           {sorted.map((r, i) => (
             <tr key={`${r.date}-${r.product}-${i}`} style={{
-              backgroundColor: i % 2 === 0 ? '#fff' : '#fafafa',
+              backgroundColor: i % 2 === 0 ? theme.cardBg : theme.tableRowAlt,
             }}>
               <td style={{ padding: '0.5rem 1rem' }}>{r.date}</td>
               <td style={{ padding: '0.5rem 1rem' }}>{r.product}</td>
@@ -74,7 +79,7 @@ export function DataTable({ records }: DataTableProps) {
           ))}
         </tbody>
       </table>
-      <p style={{ color: '#999', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+      <p style={{ color: theme.textMuted, fontSize: '0.85rem', marginTop: '0.5rem' }}>
         {records.length} records
       </p>
     </div>

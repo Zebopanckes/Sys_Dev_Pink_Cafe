@@ -38,7 +38,29 @@ export interface AccuracyMetrics {
   mae: number;
   rmse: number;
   mape: number;
-  r2: number;
+  training_time?: number;
+}
+
+export interface ModelComparisonResult {
+  algorithm: string;
+  name: string;
+  mae: number;
+  rmse: number;
+  mape: number;
+  training_time: number;
+}
+
+export interface WindowResult {
+  window: number;
+  mae: number;
+  rmse: number;
+  mape: number;
+  training_time: number;
+}
+
+export interface TrainingWindowData {
+  windows: number[];
+  results: Record<string, { name: string; data: WindowResult[] }>;
 }
 
 export interface DateRange {
@@ -48,4 +70,9 @@ export interface DateRange {
 
 export type ViewMode = 'chart' | 'table';
 
-export type AlgorithmType = 'linear_regression' | 'random_forest' | 'gradient_boosting';
+export type AlgorithmType =
+  | 'linear_regression'
+  | 'random_forest'
+  | 'gradient_boosting'
+  | 'arima'
+  | 'lstm';

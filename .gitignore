@@ -1,2 +1,19 @@
 .vscode/
 bristol-pink-dashboard/.github/copilot-instructions.md
+
+# Python bytecode and caches
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node/Vite generated files
+**/node_modules/
+**/node_modules/.vite/
+
+# Build outputs and TS incremental cache
+**/dist/
+**/*.tsbuildinfo
+
+# Local extracted docx text artifacts
+.vscode/_docx_extract/

@@ -16,19 +16,54 @@ import { TrainingPeriodSelector } from './components/TrainingPeriodSelector';
 import { DataTable } from './components/DataTable';
 import { ModelEvaluation } from './components/ModelEvaluation';
 import { ModelExplanations } from './components/ModelExplanations';
+import { PredictionTable } from './components/PredictionTable';
 import { getPredictions } from './services/api';
 import { PredictionData } from './types';
 import { useTheme } from './ThemeContext';
 
+const CAFES = [
+  { id: 'cafe-1', name: 'Bristol Pink - Academy North' },
+  { id: 'cafe-2', name: 'Bristol Pink - Academy South' },
+  { id: 'cafe-3', name: 'Bristol Pink - City Offices' },
+  { id: 'cafe-4', name: 'Bristol Pink - Harbourside' },
+  { id: 'cafe-5', name: 'Bristol Pink - Clifton' },
+];
+
+const PRIMARY_CAFE_ID = CAFES[0].id;
+
+function buildCafeMap<T>(factory: () => T): Record<string, T> {
+  return CAFES.reduce((acc, cafe) => {
+    acc[cafe.id] = factory();
+    return acc;
+  }, {} as Record<string, T>);
+}
+
+type PredictionViewMode = 'chart' | 'table' | 'both';
+
 function App() {
   const location = useLocation();
   const { theme, isDark, toggleTheme } = useTheme();
-  const [salesRecords, setSalesRecords] = useState<SalesRecord[]>([]);
-  const [predictions, setPredictions] = useState<PredictionData[]>([]);
+  const [selectedCafeId, setSelectedCafeId] = useState(PRIMARY_CAFE_ID);
+  const [salesByCafe, setSalesByCafe] = useState<Record<string, SalesRecord[]>>(() => buildCafeMap(() => []));
+  const [predictionsByCafe, setPredictionsByCafe] = useState<Record<string, PredictionData[]>>(() => buildCafeMap(() => []));
   const [trainingWeeks, setTrainingWeeks] = useState(4);
   const [algorithm, setAlgorithm] = useState<AlgorithmType>('linear_regression');
   const [isPredicting, setIsPredicting] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('chart');
+  const [predictionViewMode, setPredictionViewMode] = useState<PredictionViewMode>('chart');
+
+  const selectedCafe = useMemo(
+    () => CAFES.find((c) => c.id === selectedCafeId) ?? CAFES[0],
+    [selectedCafeId]
+  );
+  const salesRecords = useMemo(
+    () => salesByCafe[selectedCafeId] ?? [],
+    [salesByCafe, selectedCafeId]
+  );
+  const predictions = useMemo(
+    () => predictionsByCafe[selectedCafeId] ?? [],
+    [predictionsByCafe, selectedCafeId]
+  );
 
   const topFoods = useMemo(() => getTopProducts(salesRecords, 'food', 3), [salesRecords]);
   const topCoffees = useMemo(() => getTopProducts(salesRecords, 'coffee', 3), [salesRecords]);
@@ -46,12 +81,18 @@ function App() {
         ...r,
         product: r.product || (file.name.toLowerCase().includes('croissant') ? 'Croissant' : 'Product'),
       }));
-      setSalesRecords((prev) => [...prev, ...withProducts]);
-      setPredictions([]);
+      setSalesByCafe((prev) => ({
+        ...prev,
+        [selectedCafeId]: [...(prev[selectedCafeId] ?? []), ...withProducts],
+      }));
+      setPredictionsByCafe((prev) => ({
+        ...prev,
+        [selectedCafeId]: [],
+      }));
     } catch (err) {
       console.error('Failed to load dropped file:', err);
     }
-  }, []);
+  }, [selectedCafeId]);
 
   useEffect(() => {
     (async () => {
@@ -60,7 +101,10 @@ function App() {
         const croissantRecords = await parseCSVText(croissantCsv);
         const cCoffee = coffeeRecords.map((r) => ({ ...r, product: r.product || 'Coffee' }));
         const cCroissant = croissantRecords.map((r) => ({ ...r, product: r.product || 'Croissant' }));
-        setSalesRecords([...cCoffee, ...cCroissant]);
+        setSalesByCafe((prev) => ({
+          ...prev,
+          [PRIMARY_CAFE_ID]: [...cCoffee, ...cCroissant],
+        }));
       } catch (err) {
         console.error('Failed to load default CSVs:', err);
       }
@@ -72,13 +116,16 @@ function App() {
     setIsPredicting(true);
     try {
       const result = await getPredictions(salesRecords, trainingWeeks, algorithm);
-      setPredictions(result);
+      setPredictionsByCafe((prev) => ({
+        ...prev,
+        [selectedCafeId]: result,
+      }));
     } catch (err) {
       console.error('Prediction failed:', err);
     } finally {
       setIsPredicting(false);
     }
-  }, [salesRecords, trainingWeeks, algorithm]);
+  }, [salesRecords, trainingWeeks, algorithm, selectedCafeId]);
 
   useEffect(() => {
     if (salesRecords.length > 0 && predictions.length === 0) {
@@ -139,6 +186,36 @@ function App() {
             Bristol Pink Cafe
           </h1>
           <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              marginRight: '0.5rem',
+              padding: '0.2rem 0.45rem',
+              borderRadius: 6,
+              backgroundColor: 'rgba(255,255,255,0.16)',
+            }}>
+              <span style={{ fontSize: '0.76rem', opacity: 0.95 }}>Cafe</span>
+              <select
+                value={selectedCafeId}
+                onChange={(e) => setSelectedCafeId(e.target.value)}
+                style={{
+                  border: 'none',
+                  borderRadius: 4,
+                  fontSize: '0.78rem',
+                  padding: '0.2rem 0.35rem',
+                  color: '#333',
+                  minWidth: 165,
+                }}
+              >
+                {CAFES.map((cafe) => (
+                  <option key={cafe.id} value={cafe.id}>
+                    {cafe.name}
+                  </option>
+                ))}
+              </select>
+              <span style={{ fontSize: '0.72rem', opacity: 0.9 }}>{CAFES.length} total</span>
+            </div>
             <button
               onClick={toggleTheme}
               style={{
@@ -200,6 +277,20 @@ function App() {
                 path="/"
                 element={
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{
+                      backgroundColor: theme.cardBg,
+                      borderRadius: 10,
+                      border: `1px solid ${theme.cardBorder}`,
+                      boxShadow: theme.shadow,
+                      padding: '0.65rem 0.9rem',
+                      fontSize: '0.83rem',
+                      color: theme.textSecondary,
+                    }}>
+                      Viewing data for <strong style={{ color: theme.text }}>{selectedCafe.name}</strong>
+                      {selectedCafeId !== PRIMARY_CAFE_ID && salesRecords.length === 0 && (
+                        <span> - this cafe currently has no loaded data.</span>
+                      )}
+                    </div>
                     {/* Stats row */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
                       <div style={{ backgroundColor: theme.cardBg, borderRadius: 12, padding: '1rem 1.25rem', boxShadow: theme.shadow, border: `1px solid ${theme.cardBorder}`, transition: 'background-color 0.3s ease' }}>
@@ -256,11 +347,53 @@ function App() {
                           onRunPrediction={handleRunPrediction}
                           isLoading={isPredicting}
                         />
-                        <PredictionChart
-                          historicalData={chartData}
-                          predictionData={predictionDataArray}
-                          products={products.slice(0, 5)}
-                        />
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          backgroundColor: theme.cardBg,
+                          borderRadius: 10,
+                          border: `1px solid ${theme.cardBorder}`,
+                          boxShadow: theme.shadow,
+                          padding: '0.5rem',
+                          width: 'fit-content',
+                        }}>
+                          <span style={{ fontSize: '0.8rem', color: theme.textSecondary, margin: '0 0.35rem' }}>
+                            Prediction View
+                          </span>
+                          {([
+                            { key: 'chart', label: 'Chart' },
+                            { key: 'table', label: 'Table' },
+                            { key: 'both', label: 'Both' },
+                          ] as const).map((opt) => (
+                            <button
+                              key={opt.key}
+                              onClick={() => setPredictionViewMode(opt.key)}
+                              style={{
+                                padding: '0.35rem 0.8rem',
+                                backgroundColor: predictionViewMode === opt.key ? '#e91e63' : theme.inputBg,
+                                color: predictionViewMode === opt.key ? '#fff' : theme.textSecondary,
+                                border: `1px solid ${predictionViewMode === opt.key ? '#e91e63' : theme.inputBorder}`,
+                                borderRadius: 6,
+                                cursor: 'pointer',
+                                fontSize: '0.78rem',
+                                fontWeight: 500,
+                              }}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                        {(predictionViewMode === 'chart' || predictionViewMode === 'both') && (
+                          <PredictionChart
+                            historicalData={chartData}
+                            predictionData={predictionDataArray}
+                            products={products.slice(0, 5)}
+                          />
+                        )}
+                        {(predictionViewMode === 'table' || predictionViewMode === 'both') && (
+                          <PredictionTable predictions={predictions} />
+                        )}
                         <ModelExplanations />
                         <ModelEvaluation
                           salesRecords={salesRecords}

@@ -8,6 +8,7 @@ import {
   Area,
   ComposedChart,
   Line,
+  Brush,
 } from 'recharts';
 import { ProductToggle, COLORS } from './ProductToggle';
 import { useTheme } from '../ThemeContext';
@@ -97,6 +98,7 @@ export function PredictionChart({ historicalData, predictionData, products }: Pr
             contentStyle={{ borderRadius: 8, border: `1px solid ${theme.tooltipBorder}`, fontSize: '0.85rem', backgroundColor: theme.tooltipBg, color: theme.text }}
             labelFormatter={(label: string) => `Date: ${label}`}
           />
+          <Brush dataKey="date" height={28} stroke="#e91e63" fill={theme.cardBg} />
           {products.filter((p) => visible.has(p)).map((p) => {
             const i = products.indexOf(p);
             const color = COLORS[i % COLORS.length];

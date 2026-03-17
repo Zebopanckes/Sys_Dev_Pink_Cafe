@@ -58,6 +58,30 @@ export function PredictionChart({ historicalData, predictionData, products }: Pr
     return [...histTail, ...predictionData];
   }, [historicalData, predictionData, products]);
 
+  const chartSummary = useMemo(() => {
+    if (predictionData.length === 0) {
+      return 'No prediction data available.';
+    }
+
+    const activeProducts = products.filter((p) => visible.has(p));
+    const predictionDates = predictionData.map((row) => String(row.date));
+    const start = predictionDates[0];
+    const end = predictionDates[predictionDates.length - 1];
+
+    const means = activeProducts.map((product) => {
+      const samples = predictionData
+        .map((row) => row[`${product}_predicted`])
+        .filter((v): v is number => typeof v === 'number');
+      const avg = samples.length > 0
+        ? samples.reduce((a, b) => a + b, 0) / samples.length
+        : 0;
+      return { product, avg };
+    });
+
+    const top = means.slice().sort((a, b) => b.avg - a.avg)[0];
+    return `Predicted sales chart from ${start} to ${end}. ${activeProducts.length} visible products. Highest average forecast is ${top?.product ?? 'N/A'} at ${Math.round(top?.avg ?? 0)} units per day.`;
+  }, [predictionData, products, visible]);
+
   if (predictionData.length === 0) {
     return (
       <div style={{
@@ -82,6 +106,13 @@ export function PredictionChart({ historicalData, predictionData, products }: Pr
         <h3 style={{ margin: 0, color: theme.text, fontSize: '1rem', fontWeight: 600 }}>Predicted Sales (Next 4 Weeks)</h3>
         <ProductToggle products={products} visible={visible} onToggle={toggle} />
       </div>
+      <p className="sr-only" aria-live="polite">{chartSummary}</p>
+      <details style={{ marginBottom: '0.6rem' }}>
+        <summary style={{ cursor: 'pointer', color: theme.textSecondary, fontSize: '0.82rem' }}>
+          Chart Data Summary
+        </summary>
+        <p style={{ marginTop: '0.3rem', color: theme.textSecondary, fontSize: '0.82rem' }}>{chartSummary}</p>
+      </details>
       <ResponsiveContainer width="100%" height={380}>
         <ComposedChart data={combined} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={theme.gridStroke} />

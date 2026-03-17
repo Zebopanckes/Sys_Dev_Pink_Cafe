@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -32,6 +32,26 @@ export function SalesChart({ chartData, products }: SalesChartProps) {
     });
   };
 
+  const chartSummary = useMemo(() => {
+    if (chartData.length === 0) {
+      return 'No sales data available.';
+    }
+
+    const activeProducts = products.filter((p) => visible.has(p));
+    const totals = activeProducts.map((product) => {
+      const total = chartData.reduce((sum, row) => {
+        const value = row[product];
+        return sum + (typeof value === 'number' ? value : 0);
+      }, 0);
+      return { product, total };
+    });
+
+    const top = totals.slice().sort((a, b) => b.total - a.total)[0];
+    const firstDate = chartData[0]?.date;
+    const lastDate = chartData[chartData.length - 1]?.date;
+    return `Daily sales chart from ${firstDate} to ${lastDate}. ${activeProducts.length} visible products. Top visible product is ${top?.product ?? 'N/A'} with ${Math.round(top?.total ?? 0)} total units.`;
+  }, [chartData, products, visible]);
+
   if (chartData.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '2rem', color: theme.textMuted, backgroundColor: theme.cardBg, borderRadius: 12 }}>
@@ -50,6 +70,13 @@ export function SalesChart({ chartData, products }: SalesChartProps) {
         <h3 style={{ margin: 0, color: theme.text, fontSize: '1rem', fontWeight: 600 }}>Daily Sales Trend</h3>
         <ProductToggle products={products} visible={visible} onToggle={toggle} />
       </div>
+      <p className="sr-only" aria-live="polite">{chartSummary}</p>
+      <details style={{ marginBottom: '0.6rem' }}>
+        <summary style={{ cursor: 'pointer', color: theme.textSecondary, fontSize: '0.82rem' }}>
+          Chart Data Summary
+        </summary>
+        <p style={{ marginTop: '0.3rem', color: theme.textSecondary, fontSize: '0.82rem' }}>{chartSummary}</p>
+      </details>
       <ResponsiveContainer width="100%" height={350}>
         <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={theme.gridStroke} />

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import coffeeCsv from './assets/pink_coffee.csv?raw';
 import croissantCsv from './assets/pink_croissant.csv?raw';
 import { parseCSVText, parseCSVFile } from './services/csvParser';
@@ -55,6 +55,7 @@ function App() {
   const [showModelExplanations, setShowModelExplanations] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(() => getStoredUser());
   const [authReady, setAuthReady] = useState(false);
+  const closeModalButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const selectedCafe = useMemo(
     () => CAFES.find((c) => c.id === selectedCafeId) ?? CAFES[0],
@@ -163,6 +164,21 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [salesRecords]);
 
+  useEffect(() => {
+    if (!showModelExplanations) return;
+
+    closeModalButtonRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowModelExplanations(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [showModelExplanations]);
+
   const predictionChartData = useMemo(() => {
     return predictions.reduce<Record<string, Record<string, number | string>>>((acc, p) => {
       const dateStr = p.date instanceof Date
@@ -207,8 +223,9 @@ function App() {
   return (
     <GlobalDropZone onFile={handleGlobalFile}>
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: theme.bg, transition: 'background-color 0.3s ease' }}>
+        <a href="#main-content" className="skip-link">Skip to main content</a>
         {/* Header */}
-        <header style={{
+        <header aria-label="Application header" style={{
           backgroundColor: theme.headerBg,
           color: '#fff',
           padding: '0.75rem 1.5rem',
@@ -236,6 +253,7 @@ function App() {
               <select
                 value={selectedCafeId}
                 onChange={(e) => setSelectedCafeId(e.target.value)}
+                aria-label="Select cafe location"
                 style={{
                   border: 'none',
                   borderRadius: 4,
@@ -301,6 +319,7 @@ function App() {
             </button>
             <button
               onClick={() => setViewMode('chart')}
+              aria-pressed={viewMode === 'chart'}
               style={{
                 padding: '0.35rem 0.85rem',
                 backgroundColor: viewMode === 'chart' ? '#fff' : 'rgba(255,255,255,0.2)',
@@ -310,6 +329,7 @@ function App() {
             >Charts</button>
             <button
               onClick={() => setViewMode('table')}
+              aria-pressed={viewMode === 'table'}
               style={{
                 padding: '0.35rem 0.85rem',
                 backgroundColor: viewMode === 'table' ? '#fff' : 'rgba(255,255,255,0.2)',
@@ -322,7 +342,7 @@ function App() {
 
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
           {/* Sidebar - stays fixed in viewport */}
-          <nav style={{
+          <nav aria-label="Primary navigation" style={{
             width: 200,
             minWidth: 200,
             backgroundColor: theme.sidebarBg,
@@ -337,7 +357,10 @@ function App() {
           </nav>
 
           {/* Main Content - independently scrollable */}
-          <main style={{ flex: 1, padding: '1rem', overflow: 'auto' }}>
+          <main id="main-content" tabIndex={-1} style={{ flex: 1, padding: '1rem', overflow: 'auto' }}>
+            <div aria-live="polite" className="sr-only">
+              {isPredicting ? 'Prediction is running' : 'Prediction is idle'}
+            </div>
             <Routes>
               <Route
                 path="/"
@@ -449,6 +472,7 @@ function App() {
                             <button
                               key={opt.key}
                               onClick={() => setPredictionViewMode(opt.key)}
+                              aria-pressed={predictionViewMode === opt.key}
                               style={{
                                 padding: '0.35rem 0.8rem',
                                 backgroundColor: predictionViewMode === opt.key ? '#e91e63' : theme.inputBg,
@@ -535,6 +559,7 @@ function App() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                     <h2 style={{ margin: 0, color: theme.text, fontSize: '1.05rem' }}>Model Explanations</h2>
                     <button
+                      ref={closeModalButtonRef}
                       onClick={() => setShowModelExplanations(false)}
                       style={{
                         border: `1px solid ${theme.inputBorder}`,

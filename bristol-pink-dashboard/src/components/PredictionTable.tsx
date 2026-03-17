@@ -78,18 +78,34 @@ export function PredictionTable({ predictions }: PredictionTableProps) {
               color: theme.text,
               fontSize: '0.86rem',
             }}>
+              <caption className="sr-only">Predicted sales table with confidence intervals</caption>
               <thead>
                 <tr>
-                  <th style={headerStyle('date')} onClick={() => handleSort('date')}>
+                  <th
+                    scope="col"
+                    style={headerStyle('date')}
+                    onClick={() => handleSort('date')}
+                    aria-sort={sortKey === 'date' ? (sortAsc ? 'ascending' : 'descending') : 'none'}
+                  >
                     Date{arrow('date')}
                   </th>
-                  <th style={headerStyle('product')} onClick={() => handleSort('product')}>
+                  <th
+                    scope="col"
+                    style={headerStyle('product')}
+                    onClick={() => handleSort('product')}
+                    aria-sort={sortKey === 'product' ? (sortAsc ? 'ascending' : 'descending') : 'none'}
+                  >
                     Product{arrow('product')}
                   </th>
-                  <th style={headerStyle('predictedSales')} onClick={() => handleSort('predictedSales')}>
+                  <th
+                    scope="col"
+                    style={headerStyle('predictedSales')}
+                    onClick={() => handleSort('predictedSales')}
+                    aria-sort={sortKey === 'predictedSales' ? (sortAsc ? 'ascending' : 'descending') : 'none'}
+                  >
                     Predicted{arrow('predictedSales')}
                   </th>
-                  <th style={{ ...headerStyle('predictedSales'), cursor: 'default' }}>
+                  <th scope="col" style={{ ...headerStyle('predictedSales'), cursor: 'default' }}>
                     95% CI
                   </th>
                 </tr>

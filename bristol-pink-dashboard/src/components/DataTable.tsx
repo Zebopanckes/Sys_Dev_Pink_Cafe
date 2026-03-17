@@ -54,15 +54,31 @@ export function DataTable({ records }: DataTableProps) {
         color: theme.text,
         transition: 'background-color 0.3s ease',
       }}>
+        <caption className="sr-only">Sales records data table</caption>
         <thead>
           <tr>
-            <th style={headerStyle('date')} onClick={() => handleSort('date')}>
+            <th
+              scope="col"
+              style={headerStyle('date')}
+              onClick={() => handleSort('date')}
+              aria-sort={sortKey === 'date' ? (sortAsc ? 'ascending' : 'descending') : 'none'}
+            >
               Date{arrow('date')}
             </th>
-            <th style={headerStyle('product')} onClick={() => handleSort('product')}>
+            <th
+              scope="col"
+              style={headerStyle('product')}
+              onClick={() => handleSort('product')}
+              aria-sort={sortKey === 'product' ? (sortAsc ? 'ascending' : 'descending') : 'none'}
+            >
               Product{arrow('product')}
             </th>
-            <th style={headerStyle('unitsSold')} onClick={() => handleSort('unitsSold')}>
+            <th
+              scope="col"
+              style={headerStyle('unitsSold')}
+              onClick={() => handleSort('unitsSold')}
+              aria-sort={sortKey === 'unitsSold' ? (sortAsc ? 'ascending' : 'descending') : 'none'}
+            >
               Units Sold{arrow('unitsSold')}
             </th>
           </tr>

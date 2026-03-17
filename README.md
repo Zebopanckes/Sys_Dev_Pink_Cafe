@@ -132,6 +132,42 @@ Backend API activity is logged to:
 
 Each entry is written as a JSON line with timestamp, endpoint, request method, status, and contextual details.
 
+### Accessibility Checklist
+
+Accessibility hardening status is tracked in:
+
+- `bristol-pink-dashboard/docs/accessibility-checklist.md`
+
+### Performance Benchmarking
+
+Run backend benchmark instrumentation and generate reports:
+
+```bash
+cd bristol-pink-dashboard/backend
+python scripts/performance_benchmark.py
+```
+
+Generated artifacts:
+
+- `bristol-pink-dashboard/backend/reports/performance_report.json`
+- `bristol-pink-dashboard/backend/reports/performance_report.md`
+
+### Automated Backend Tests
+
+Install dev test dependencies:
+
+```bash
+cd bristol-pink-dashboard/backend
+pip install -r requirements-dev.txt
+```
+
+Run tests:
+
+```bash
+cd bristol-pink-dashboard/backend
+python -m pytest
+```
+
 ## Project Structure
 
 - `/src` - React TypeScript frontend components

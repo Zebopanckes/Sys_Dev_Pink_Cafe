@@ -27,7 +27,6 @@ interface PredictionChartProps {
 export function PredictionChart({ historicalData, predictionData, products }: PredictionChartProps) {
   const { theme } = useTheme();
   const [visible, setVisible] = useState<Set<string>>(() => new Set(products));
-  const [range, setRange] = useState<{ startIndex: number; endIndex: number } | null>(null);
 
   useEffect(() => { setVisible(new Set(products)); }, [products]);
 
@@ -59,10 +58,6 @@ export function PredictionChart({ historicalData, predictionData, products }: Pr
     return [...histTail, ...predictionData];
   }, [historicalData, predictionData, products]);
 
-  const displayedData = range
-    ? combined.slice(range.startIndex, range.endIndex + 1)
-    : combined;
-
   if (predictionData.length === 0) {
     return (
       <div style={{
@@ -85,29 +80,10 @@ export function PredictionChart({ historicalData, predictionData, products }: Pr
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <h3 style={{ margin: 0, color: theme.text, fontSize: '1rem', fontWeight: 600 }}>Predicted Sales (Next 4 Weeks)</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <ProductToggle products={products} visible={visible} onToggle={toggle} />
-          {range && (
-            <button
-              onClick={() => setRange(null)}
-              style={{
-                border: `1px solid ${theme.inputBorder}`,
-                backgroundColor: theme.inputBg,
-                color: theme.textSecondary,
-                borderRadius: 6,
-                padding: '0.2rem 0.5rem',
-                cursor: 'pointer',
-                fontSize: '0.78rem',
-              }}
-              aria-label="Reset prediction chart zoom"
-            >
-              Reset Zoom
-            </button>
-          )}
-        </div>
+        <ProductToggle products={products} visible={visible} onToggle={toggle} />
       </div>
       <ResponsiveContainer width="100%" height={380}>
-        <ComposedChart data={displayedData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+        <ComposedChart data={combined} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={theme.gridStroke} />
           <XAxis
             dataKey="date"
@@ -122,22 +98,7 @@ export function PredictionChart({ historicalData, predictionData, products }: Pr
             contentStyle={{ borderRadius: 8, border: `1px solid ${theme.tooltipBorder}`, fontSize: '0.85rem', backgroundColor: theme.tooltipBg, color: theme.text }}
             labelFormatter={(label: string) => `Date: ${label}`}
           />
-          <Brush
-            dataKey="date"
-            height={28}
-            stroke="#e91e63"
-            fill={theme.cardBg}
-            onChange={(next) => {
-              if (
-                next &&
-                typeof next.startIndex === 'number' &&
-                typeof next.endIndex === 'number' &&
-                next.endIndex > next.startIndex
-              ) {
-                setRange({ startIndex: next.startIndex, endIndex: next.endIndex });
-              }
-            }}
-          />
+          <Brush dataKey="date" height={28} stroke="#e91e63" fill={theme.cardBg} />
           {products.filter((p) => visible.has(p)).map((p) => {
             const i = products.indexOf(p);
             const color = COLORS[i % COLORS.length];

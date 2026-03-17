@@ -7,6 +7,7 @@ interface TrainingPeriodSelectorProps {
   algorithm: AlgorithmType;
   onAlgorithmChange: (algorithm: AlgorithmType) => void;
   onRunPrediction: () => void;
+  onOpenModelExplanations: () => void;
   isLoading: boolean;
   disabled?: boolean;
 }
@@ -17,6 +18,7 @@ export function TrainingPeriodSelector({
   algorithm,
   onAlgorithmChange,
   onRunPrediction,
+  onOpenModelExplanations,
   isLoading,
   disabled = false,
 }: TrainingPeriodSelectorProps) {
@@ -84,23 +86,42 @@ export function TrainingPeriodSelector({
         </select>
       </div>
 
-      <button
-        onClick={onRunPrediction}
-        disabled={isLoading || disabled}
-        style={{
-          padding: '0.5rem 1.5rem',
-          backgroundColor: isLoading || disabled ? '#ccc' : '#e91e63',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 4,
-          fontSize: '0.95rem',
-          cursor: isLoading || disabled ? 'not-allowed' : 'pointer',
-          alignSelf: 'flex-end',
-        }}
-        aria-label="Run prediction"
-      >
-        {isLoading ? 'Running...' : disabled ? 'Role Restricted' : 'Run Prediction'}
-      </button>
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', marginLeft: 'auto' }}>
+        <button
+          onClick={onOpenModelExplanations}
+          type="button"
+          style={{
+            padding: '0.5rem 1rem',
+            backgroundColor: theme.inputBg,
+            color: theme.text,
+            border: `1px solid ${theme.inputBorder}`,
+            borderRadius: 4,
+            fontSize: '0.9rem',
+            cursor: 'pointer',
+            alignSelf: 'flex-end',
+          }}
+          aria-label="Open model explanations"
+        >
+          Model Explanations
+        </button>
+        <button
+          onClick={onRunPrediction}
+          disabled={isLoading || disabled}
+          style={{
+            padding: '0.5rem 1.5rem',
+            backgroundColor: isLoading || disabled ? '#ccc' : '#e91e63',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 4,
+            fontSize: '0.95rem',
+            cursor: isLoading || disabled ? 'not-allowed' : 'pointer',
+            alignSelf: 'flex-end',
+          }}
+          aria-label="Run prediction"
+        >
+          {isLoading ? 'Running...' : disabled ? 'Role Restricted' : 'Run Prediction'}
+        </button>
+      </div>
     </div>
   );
 }

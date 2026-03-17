@@ -52,6 +52,7 @@ function App() {
   const [isPredicting, setIsPredicting] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('chart');
   const [predictionViewMode, setPredictionViewMode] = useState<PredictionViewMode>('chart');
+  const [showModelExplanations, setShowModelExplanations] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(() => getStoredUser());
   const [authReady, setAuthReady] = useState(false);
 
@@ -422,6 +423,7 @@ function App() {
                           algorithm={algorithm}
                           onAlgorithmChange={setAlgorithm}
                           onRunPrediction={handleRunPrediction}
+                          onOpenModelExplanations={() => setShowModelExplanations(true)}
                           isLoading={isPredicting}
                           disabled={!canRunModels}
                         />
@@ -473,13 +475,10 @@ function App() {
                           <PredictionTable predictions={predictions} />
                         )}
                         {canRunModels && (
-                          <>
-                            <ModelExplanations />
-                            <ModelEvaluation
-                              salesRecords={salesRecords}
-                              trainingWeeks={trainingWeeks}
-                            />
-                          </>
+                          <ModelEvaluation
+                            salesRecords={salesRecords}
+                            trainingWeeks={trainingWeeks}
+                          />
                         )}
                       </>
                     )}
@@ -503,6 +502,57 @@ function App() {
                 }
               />
             </Routes>
+            {showModelExplanations && (
+              <div
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  backgroundColor: 'rgba(0, 0, 0, 0.45)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '1rem',
+                  zIndex: 1000,
+                }}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Model explanations"
+                onClick={() => setShowModelExplanations(false)}
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    width: 'min(920px, 100%)',
+                    maxHeight: '85vh',
+                    overflowY: 'auto',
+                    backgroundColor: theme.cardBg,
+                    borderRadius: 12,
+                    padding: '1rem',
+                    border: `1px solid ${theme.cardBorder}`,
+                    boxShadow: '0 16px 48px rgba(0,0,0,0.25)',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <h2 style={{ margin: 0, color: theme.text, fontSize: '1.05rem' }}>Model Explanations</h2>
+                    <button
+                      onClick={() => setShowModelExplanations(false)}
+                      style={{
+                        border: `1px solid ${theme.inputBorder}`,
+                        backgroundColor: theme.inputBg,
+                        color: theme.text,
+                        borderRadius: 6,
+                        padding: '0.35rem 0.7rem',
+                        cursor: 'pointer',
+                      }}
+                      aria-label="Close model explanations"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <ModelExplanations />
+                </div>
+              </div>
+            )}
           </main>
         </div>
       </div>

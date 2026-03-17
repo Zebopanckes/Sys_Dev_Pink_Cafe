@@ -17,9 +17,10 @@ import { DataTable } from './components/DataTable';
 import { ModelEvaluation } from './components/ModelEvaluation';
 import { ModelExplanations } from './components/ModelExplanations';
 import { PredictionTable } from './components/PredictionTable';
-import { getPredictions } from './services/api';
-import { PredictionData } from './types';
+import { getCurrentUser, getPredictions, getStoredUser, logout } from './services/api';
+import { PredictionData, AuthUser } from './types';
 import { useTheme } from './ThemeContext';
+import { LoginForm } from './components/LoginForm';
 
 const CAFES = [
   { id: 'cafe-1', name: 'Bristol Pink - Academy North' },
@@ -51,6 +52,8 @@ function App() {
   const [isPredicting, setIsPredicting] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('chart');
   const [predictionViewMode, setPredictionViewMode] = useState<PredictionViewMode>('chart');
+  const [user, setUser] = useState<AuthUser | null>(() => getStoredUser());
+  const [authReady, setAuthReady] = useState(false);
 
   const selectedCafe = useMemo(
     () => CAFES.find((c) => c.id === selectedCafeId) ?? CAFES[0],
@@ -68,6 +71,7 @@ function App() {
   const topFoods = useMemo(() => getTopProducts(salesRecords, 'food', 3), [salesRecords]);
   const topCoffees = useMemo(() => getTopProducts(salesRecords, 'coffee', 3), [salesRecords]);
   const chartData = useMemo(() => aggregateByDate(salesRecords), [salesRecords]);
+  const canRunModels = user?.role === 'manager' || user?.role === 'analyst';
 
   const products = useMemo(() => {
     const productSet = new Set(salesRecords.map((r) => r.product));
@@ -96,6 +100,24 @@ function App() {
 
   useEffect(() => {
     (async () => {
+      const stored = getStoredUser();
+      if (!stored) {
+        setAuthReady(true);
+        return;
+      }
+      try {
+        const current = await getCurrentUser();
+        setUser(current);
+      } catch {
+        setUser(null);
+      } finally {
+        setAuthReady(true);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
       try {
         const coffeeRecords = await parseCSVText(coffeeCsv);
         const croissantRecords = await parseCSVText(croissantCsv);
@@ -112,7 +134,7 @@ function App() {
   }, []);
 
   const handleRunPrediction = useCallback(async () => {
-    if (salesRecords.length === 0) return;
+    if (salesRecords.length === 0 || !canRunModels) return;
     setIsPredicting(true);
     try {
       const result = await getPredictions(salesRecords, trainingWeeks, algorithm);
@@ -122,10 +144,16 @@ function App() {
       }));
     } catch (err) {
       console.error('Prediction failed:', err);
+      alert(err instanceof Error ? err.message : 'Prediction failed');
     } finally {
       setIsPredicting(false);
     }
-  }, [salesRecords, trainingWeeks, algorithm, selectedCafeId]);
+  }, [salesRecords, trainingWeeks, algorithm, selectedCafeId, canRunModels]);
+
+  const handleLogout = useCallback(async () => {
+    await logout();
+    setUser(null);
+  }, []);
 
   useEffect(() => {
     if (salesRecords.length > 0 && predictions.length === 0) {
@@ -166,6 +194,14 @@ function App() {
 
   const totalRecords = salesRecords.length;
   const totalUnits = salesRecords.reduce((s, r) => s + r.unitsSold, 0);
+
+  if (!authReady) {
+    return <div style={{ padding: '2rem', fontFamily: 'inherit' }}>Loading authentication...</div>;
+  }
+
+  if (!user) {
+    return <LoginForm onLoggedIn={setUser} />;
+  }
 
   return (
     <GlobalDropZone onFile={handleGlobalFile}>
@@ -216,6 +252,18 @@ function App() {
               </select>
               <span style={{ fontSize: '0.72rem', opacity: 0.9 }}>{CAFES.length} total</span>
             </div>
+            <div
+              style={{
+                fontSize: '0.78rem',
+                marginRight: '0.55rem',
+                backgroundColor: 'rgba(255,255,255,0.16)',
+                borderRadius: 6,
+                padding: '0.22rem 0.5rem',
+              }}
+              aria-label="Current user role"
+            >
+              {user.username} ({user.role})
+            </div>
             <button
               onClick={toggleTheme}
               style={{
@@ -232,6 +280,23 @@ function App() {
               title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {isDark ? 'Light Mode' : 'Dark Mode'}
+            </button>
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: '0.35rem 0.7rem',
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: '0.82rem',
+                marginRight: '0.45rem',
+              }}
+              aria-label="Sign out"
+            >
+              Sign out
             </button>
             <button
               onClick={() => setViewMode('chart')}
@@ -329,6 +394,18 @@ function App() {
                 path="/predictions"
                 element={
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {!canRunModels && (
+                      <div style={{
+                        backgroundColor: '#fff3cd',
+                        border: '1px solid #ffe08a',
+                        borderRadius: 8,
+                        color: '#6b5300',
+                        fontSize: '0.85rem',
+                        padding: '0.6rem 0.8rem',
+                      }}>
+                        Your role is <strong>{user.role}</strong>. Prediction and model evaluation are disabled for viewer accounts.
+                      </div>
+                    )}
                     {salesRecords.length === 0 ? (
                       <div style={{
                         textAlign: 'center', padding: '3rem',
@@ -346,6 +423,7 @@ function App() {
                           onAlgorithmChange={setAlgorithm}
                           onRunPrediction={handleRunPrediction}
                           isLoading={isPredicting}
+                          disabled={!canRunModels}
                         />
                         <div style={{
                           display: 'flex',
@@ -394,11 +472,15 @@ function App() {
                         {(predictionViewMode === 'table' || predictionViewMode === 'both') && (
                           <PredictionTable predictions={predictions} />
                         )}
-                        <ModelExplanations />
-                        <ModelEvaluation
-                          salesRecords={salesRecords}
-                          trainingWeeks={trainingWeeks}
-                        />
+                        {canRunModels && (
+                          <>
+                            <ModelExplanations />
+                            <ModelEvaluation
+                              salesRecords={salesRecords}
+                              trainingWeeks={trainingWeeks}
+                            />
+                          </>
+                        )}
                       </>
                     )}
                   </div>

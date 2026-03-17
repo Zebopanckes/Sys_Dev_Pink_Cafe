@@ -114,6 +114,24 @@ Open your browser and navigate to the frontend URL. You can:
 - Train prediction models
 - Generate sales forecasts
 
+### Authentication and Roles
+
+The dashboard now requires login and supports role-based access:
+
+- `manager / manager123` - full access
+- `analyst / analyst123` - full model access
+- `viewer / viewer123` - read-only dashboard and tables
+
+Model prediction and evaluation endpoints require `manager` or `analyst` roles.
+
+### Audit Logging
+
+Backend API activity is logged to:
+
+- `bristol-pink-dashboard/backend/logs/audit.log`
+
+Each entry is written as a JSON line with timestamp, endpoint, request method, status, and contextual details.
+
 ## Project Structure
 
 - `/src` - React TypeScript frontend components

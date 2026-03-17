@@ -6,6 +6,7 @@ bristol-pink-dashboard/.github/copilot-instructions.md
 *.pyc
 *.pyo
 *.pyd
+**/logs/*.log
 
 # Node/Vite generated files
 **/node_modules/

@@ -76,3 +76,11 @@ export type AlgorithmType =
   | 'gradient_boosting'
   | 'arima'
   | 'lstm';
+
+export type UserRole = 'manager' | 'analyst' | 'viewer';
+
+export interface AuthUser {
+  username: string;
+  role: UserRole;
+  expires_at?: string;
+}

@@ -8,6 +8,7 @@ interface TrainingPeriodSelectorProps {
   onAlgorithmChange: (algorithm: AlgorithmType) => void;
   onRunPrediction: () => void;
   isLoading: boolean;
+  disabled?: boolean;
 }
 
 export function TrainingPeriodSelector({
@@ -17,6 +18,7 @@ export function TrainingPeriodSelector({
   onAlgorithmChange,
   onRunPrediction,
   isLoading,
+  disabled = false,
 }: TrainingPeriodSelectorProps) {
   const { theme } = useTheme();
   return (
@@ -39,6 +41,8 @@ export function TrainingPeriodSelector({
         <select
           value={weeks}
           onChange={(e) => onWeeksChange(Number(e.target.value))}
+          disabled={disabled}
+          aria-label="Training period selector"
           style={{
             padding: '0.5rem',
             borderRadius: 4,
@@ -61,6 +65,8 @@ export function TrainingPeriodSelector({
         <select
           value={algorithm}
           onChange={(e) => onAlgorithmChange(e.target.value as AlgorithmType)}
+          disabled={disabled}
+          aria-label="Algorithm selector"
           style={{
             padding: '0.5rem',
             borderRadius: 4,
@@ -80,19 +86,20 @@ export function TrainingPeriodSelector({
 
       <button
         onClick={onRunPrediction}
-        disabled={isLoading}
+        disabled={isLoading || disabled}
         style={{
           padding: '0.5rem 1.5rem',
-          backgroundColor: isLoading ? '#ccc' : '#e91e63',
+          backgroundColor: isLoading || disabled ? '#ccc' : '#e91e63',
           color: '#fff',
           border: 'none',
           borderRadius: 4,
           fontSize: '0.95rem',
-          cursor: isLoading ? 'not-allowed' : 'pointer',
+          cursor: isLoading || disabled ? 'not-allowed' : 'pointer',
           alignSelf: 'flex-end',
         }}
+        aria-label="Run prediction"
       >
-        {isLoading ? 'Running...' : 'Run Prediction'}
+        {isLoading ? 'Running...' : disabled ? 'Role Restricted' : 'Run Prediction'}
       </button>
     </div>
   );

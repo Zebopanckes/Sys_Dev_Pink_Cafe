@@ -126,7 +126,7 @@ def validate_sales_data(sales_data: list[dict]) -> tuple[bool, str]:
         product = str(row.get("product", "")).strip()
         if not product:
             return False, f"Row {i} has an empty product"
-
+ 
         try:
             parsed_date = pd.to_datetime(row["date"])
             if pd.isna(parsed_date):

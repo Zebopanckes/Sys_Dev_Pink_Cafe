@@ -1,6 +1,6 @@
 # Performance Benchmark Report
 
-Generated: 2026-03-17T18:34:10.104254+00:00
+Generated: 2026-03-25T17:13:43.947137+00:00
 Iterations per endpoint: 12
 NFR interaction target: <= 2000 ms (p95)
 
@@ -8,9 +8,9 @@ NFR interaction target: <= 2000 ms (p95)
 
 | Endpoint | Avg (ms) | Median (ms) | P95 (ms) | Min (ms) | Max (ms) | Status |
 |---|---:|---:|---:|---:|---:|---|
-| /api/predict (linear_regression) | 136.97 | 136.09 | 143.71 | 128.54 | 145.81 | PASS |
-| /api/evaluate (linear_regression) | 121.55 | 119.61 | 126.61 | 113.99 | 145.07 | PASS |
-| /api/evaluate/compare | 852.75 | 753.74 | 809.4 | 728.58 | 1897.05 | PASS |
+| /api/predict (linear_regression) | 144.32 | 139.1 | 161.17 | 116.81 | 185.54 | PASS |
+| /api/evaluate (linear_regression) | 121.5 | 117.4 | 137.2 | 113.8 | 138.5 | PASS |
+| /api/evaluate/compare | 854.34 | 780.14 | 836.16 | 741.82 | 1668.82 | PASS |
 
 ## Notes
 - Benchmarks executed with Flask test client in-process to remove network variance.

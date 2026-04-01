@@ -1,31 +1,31 @@
 {
-  "generated_at": "2026-03-17T18:34:10.104254+00:00",
+  "generated_at": "2026-03-25T17:13:43.947137+00:00",
   "iterations": 12,
   "nfr_interaction_target_ms": 2000,
   "endpoints": {
     "predict_linear_regression": {
       "count": 12,
-      "avg_ms": 136.97,
-      "median_ms": 136.09,
-      "p95_ms": 143.71,
-      "min_ms": 128.54,
-      "max_ms": 145.81
+      "avg_ms": 144.32,
+      "median_ms": 139.1,
+      "p95_ms": 161.17,
+      "min_ms": 116.81,
+      "max_ms": 185.54
     },
     "evaluate_linear_regression": {
       "count": 12,
-      "avg_ms": 121.55,
-      "median_ms": 119.61,
-      "p95_ms": 126.61,
-      "min_ms": 113.99,
-      "max_ms": 145.07
+      "avg_ms": 121.5,
+      "median_ms": 117.4,
+      "p95_ms": 137.2,
+      "min_ms": 113.8,
+      "max_ms": 138.5
     },
     "evaluate_compare_all_models": {
       "count": 12,
-      "avg_ms": 852.75,
-      "median_ms": 753.74,
-      "p95_ms": 809.4,
-      "min_ms": 728.58,
-      "max_ms": 1897.05
+      "avg_ms": 854.34,
+      "median_ms": 780.14,
+      "p95_ms": 836.16,
+      "min_ms": 741.82,
+      "max_ms": 1668.82
     }
   }
 }

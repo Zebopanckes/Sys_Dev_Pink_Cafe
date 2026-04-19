@@ -55,6 +55,7 @@ function App() {
   const [showModelExplanations, setShowModelExplanations] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(() => getStoredUser());
   const [authReady, setAuthReady] = useState(false);
+  const [ingestError, setIngestError] = useState<string | null>(null);
   const closeModalButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const selectedCafe = useMemo(
@@ -95,10 +96,17 @@ function App() {
         ...prev,
         [selectedCafeId]: [],
       }));
+      setIngestError(null);
     } catch (err) {
       console.error('Failed to load dropped file:', err);
+      const msg = err instanceof Error ? err.message : 'Unknown error while parsing CSV.';
+      setIngestError(`Could not import "${file.name}": ${msg}`);
     }
   }, [selectedCafeId]);
+
+  const handleIngestReject = useCallback((reason: string) => {
+    setIngestError(reason);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -125,10 +133,14 @@ function App() {
         const croissantRecords = await parseCSVText(croissantCsv);
         const cCoffee = coffeeRecords.map((r) => ({ ...r, product: r.product || 'Coffee' }));
         const cCroissant = croissantRecords.map((r) => ({ ...r, product: r.product || 'Croissant' }));
-        setSalesByCafe((prev) => ({
-          ...prev,
-          [PRIMARY_CAFE_ID]: [...cCoffee, ...cCroissant],
-        }));
+        setSalesByCafe((prev) => {
+          // Don't clobber data the user may have already dropped
+          if ((prev[PRIMARY_CAFE_ID]?.length ?? 0) > 0) return prev;
+          return {
+            ...prev,
+            [PRIMARY_CAFE_ID]: [...cCoffee, ...cCroissant],
+          };
+        });
       } catch (err) {
         console.error('Failed to load default CSVs:', err);
       }
@@ -179,6 +191,12 @@ function App() {
     };
   }, [showModelExplanations]);
 
+  useEffect(() => {
+    if (!ingestError) return;
+    const t = window.setTimeout(() => setIngestError(null), 6000);
+    return () => window.clearTimeout(t);
+  }, [ingestError]);
+
   const predictionChartData = useMemo(() => {
     return predictions.reduce<Record<string, Record<string, number | string>>>((acc, p) => {
       const dateStr = p.date instanceof Date
@@ -221,9 +239,52 @@ function App() {
   }
 
   return (
-    <GlobalDropZone onFile={handleGlobalFile}>
+    <GlobalDropZone onFile={handleGlobalFile} onReject={handleIngestReject}>
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: theme.bg, transition: 'background-color 0.3s ease' }}>
         <a href="#main-content" className="skip-link">Skip to main content</a>
+        {ingestError && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            style={{
+              position: 'fixed',
+              top: 16,
+              right: 16,
+              zIndex: 10000,
+              maxWidth: 380,
+              backgroundColor: '#b71c1c',
+              color: '#fff',
+              padding: '0.75rem 1rem',
+              borderRadius: 8,
+              boxShadow: '0 6px 20px rgba(0,0,0,0.25)',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.75rem',
+              fontSize: '0.9rem',
+            }}
+          >
+            <span style={{ flex: 1, lineHeight: 1.35 }}>
+              <strong style={{ display: 'block', marginBottom: 2 }}>CSV import failed</strong>
+              {ingestError}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIngestError(null)}
+              aria-label="Dismiss error"
+              style={{
+                background: 'transparent',
+                color: '#fff',
+                border: '1px solid rgba(255,255,255,0.5)',
+                borderRadius: 4,
+                padding: '0 0.5rem',
+                cursor: 'pointer',
+                lineHeight: 1.5,
+              }}
+            >
+              ×
+            </button>
+          </div>
+        )}
         {/* Header */}
         <header aria-label="Application header" style={{
           backgroundColor: theme.headerBg,

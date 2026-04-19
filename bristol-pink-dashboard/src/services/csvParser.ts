@@ -10,11 +10,17 @@ interface CSVRow {
 }
 
 function normalizeDate(dateStr: string): string {
-  const parts = dateStr.trim().split('/');
+  const trimmed = (dateStr || '').trim();
+  if (!trimmed) return '';
+  const parts = trimmed.split('/');
   if (parts.length === 3) {
-    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    const [d, m, y] = parts;
+    if (!d || !m || !y) return '';
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
   }
-  return new Date(dateStr).toISOString().split('T')[0];
+  const parsed = new Date(trimmed);
+  if (isNaN(parsed.getTime())) return '';
+  return parsed.toISOString().split('T')[0];
 }
 
 /**
@@ -54,6 +60,7 @@ function processRows(rows: CSVRow[], headers: string[]): SalesRecord[] {
       const dateRaw = (row.Date || '').toString();
       if (!dateRaw) continue;
       const date = normalizeDate(dateRaw);
+      if (!date) continue;
       for (const col of productColumns) {
         const val = row[col];
         const units = Number(val);
@@ -68,6 +75,7 @@ function processRows(rows: CSVRow[], headers: string[]): SalesRecord[] {
       const dateRaw = (row.Date || '').toString();
       if (!dateRaw) continue;
       const date = normalizeDate(dateRaw);
+      if (!date) continue;
       const product = (row.Product || row['Product Name'] || '').toString().trim();
       const unitsRaw = row['Units Sold'] ?? row['Number Sold'] ?? row['NumberSold'] ?? '';
       const units = parseInt(String(unitsRaw), 10) || 0;
@@ -107,7 +115,15 @@ export function parseCSVText(text: string): Promise<SalesRecord[]> {
       complete: (results) => {
         try {
           const headers = results.meta.fields || [];
+          if (!headers.some((h) => h && h.trim().toLowerCase() === 'date')) {
+            reject(new Error('CSV is missing a "Date" column.'));
+            return;
+          }
           const records = processRows(results.data, headers);
+          if (records.length === 0) {
+            reject(new Error('No valid rows found in CSV. Check date format and product columns.'));
+            return;
+          }
           resolve(records);
         } catch (err) {
           reject(err);
